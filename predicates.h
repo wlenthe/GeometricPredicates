@@ -33,6 +33,90 @@
 #ifndef _PREDICATES_H_
 #define _PREDICATES_H_
 
+//@reference: https://www.cs.cmu.edu/~quake/robust.html
+
+namespace  predicates {
+	//@brief: geometric predicates using arbitrary precision arithmetic 
+	//@note : these are provided primarily for illustrative purposes and adaptive routines should be preferred
+	namespace exact {
+		//@brief   : determine if the 2d point c is above, on, or below the line defined by a and b
+		//@param pa: pointer to a as {x, y}
+		//@param pb: pointer to b as {x, y}
+		//@param pc: pointer to c as {x, y}
+		//@return  : determinant of {{ax - cx, ay - cy}, {bx - cx, by - cy}}
+		//@note    : positive, 0, negative result for c above, on, or below the line defined by a -> b
+		template <typename T> T orient2d(T const*const pa, T const*const pb, T const*const pc);
+
+		//@brief   : determine if the 2d point d is inside, on, or outside the circle defined by a, b, and c
+		//@param pa: pointer to a as {x, y}
+		//@param pb: pointer to b as {x, y}
+		//@param pc: pointer to c as {x, y}
+		//@param pc: pointer to d as {x, y}
+		//@return  : determinant of {{ax - dx, ay - dy, (ax - dx)^2 + (ay - dy)^2}, {bx - dx, by - dy, (bx - dx)^2 + (by - dy)^2}, {cx - dx, cy - dy, (cx - dx)^2 + (cy - dy)^2}}
+		//@note    : positive, 0, negative result for d inside, on, or outside the circle defined by a, b, and c
+		template <typename T> T incircle(T const*const pa, T const*const pb, T const*const pc, T const*const pd);
+
+		//@brief   : determine if the 3d point d is above, on, or below the plane defined by a, b, and c
+		//@param pa: pointer to a as {x, y, z}
+		//@param pb: pointer to b as {x, y, z}
+		//@param pc: pointer to c as {x, y, z}
+		//@param pd: pointer to d as {x, y, z}
+		//@return  : determinant of {{ax - dx, ay - dy, az - dz}, {bx - dx, by - dy, bz - dz}, {cx - dx, cy - dy, cz - dz}}
+		//@note    : positive, 0, negative result for c above, on, or below the plane defined by a, b, and c
+		template <typename T> T orient3d(T const*const pa, T const*const pb, T const*const pc, T const*const pd);
+		
+		//@brief   : determine if the 3d point e is inside, on, or outside the sphere defined by a, b, c, and d
+		//@param pa: pointer to a as {x, y, z}
+		//@param pb: pointer to b as {x, y, z}
+		//@param pc: pointer to c as {x, y, z}
+		//@param pd: pointer to d as {x, y, z}
+		//@param pe: pointer to e as {x, y, z}
+		//@return  : determinant of {{ax - ex, ay - ey, az - ez, (ax - ex)^2 + (ay - ey)^2 + (az - ez)^2}, {bx - ex, by - ey, bz - ez, (bx - ex)^2 + (by - ey)^2 + (bz - ez)^2}, {cx - ex, cy - ey, cz - ez, (cx - ex)^2 + (cy - ey)^2 + (cz - ez)^2}, {dx - ex, dy - ey, dz - ez, (dx - ex)^2 + (dy - ey)^2 + (dz - ez)^2}}
+		//@note    : positive, 0, negative result for d inside, on, or outside the circle defined by a, b, and c
+		template <typename T> T insphere(T const*const pa, T const*const pb, T const*const pc, T const*const pd, T const*const pe);
+	}
+
+	//@brief: geometric predicates using normal floating point arithmetic but falling back to arbitrary precision when needed
+	//@note : these should have the same accuracy but are significantly faster when determinants are large
+	namespace adaptive {
+		//@brief   : determine if the 2d point c is above, on, or below the line defined by a and b
+		//@param pa: pointer to a as {x, y}
+		//@param pb: pointer to b as {x, y}
+		//@param pc: pointer to c as {x, y}
+		//@return  : determinant of {{ax - cx, ay - cy}, {bx - cx, by - cy}}
+		//@note    : positive, 0, negative result for c above, on, or below the line defined by a -> b
+		template <typename T> T orient2d(T const*const pa, T const*const pb, T const*const pc);
+
+		//@brief   : determine if the 2d point d is inside, on, or outside the circle defined by a, b, and c
+		//@param pa: pointer to a as {x, y}
+		//@param pb: pointer to b as {x, y}
+		//@param pc: pointer to c as {x, y}
+		//@param pc: pointer to d as {x, y}
+		//@return  : determinant of {{ax - dx, ay - dy, (ax - dx)^2 + (ay - dy)^2}, {bx - dx, by - dy, (bx - dx)^2 + (by - dy)^2}, {cx - dx, cy - dy, (cx - dx)^2 + (cy - dy)^2}}
+		//@note    : positive, 0, negative result for d inside, on, or outside the circle defined by a, b, and c
+		template <typename T> T incircle(T const*const pa, T const*const pb, T const*const pc, T const*const pd);
+
+		//@brief   : determine if the 3d point d is above, on, or below the plane defined by a, b, and c
+		//@param pa: pointer to a as {x, y, z}
+		//@param pb: pointer to b as {x, y, z}
+		//@param pc: pointer to c as {x, y, z}
+		//@param pd: pointer to d as {x, y, z}
+		//@return  : determinant of {{ax - dx, ay - dy, az - dz}, {bx - dx, by - dy, bz - dz}, {cx - dx, cy - dy, cz - dz}}
+		//@note    : positive, 0, negative result for c above, on, or below the plane defined by a, b, and c
+		template <typename T> T orient3d(T const*const pa, T const*const pb, T const*const pc, T const*const pd);
+
+		//@brief   : determine if the 3d point e is inside, on, or outside the sphere defined by a, b, c, and d
+		//@param pa: pointer to a as {x, y, z}
+		//@param pb: pointer to b as {x, y, z}
+		//@param pc: pointer to c as {x, y, z}
+		//@param pd: pointer to d as {x, y, z}
+		//@param pe: pointer to e as {x, y, z}
+		//@return  : determinant of {{ax - ex, ay - ey, az - ez, (ax - ex)^2 + (ay - ey)^2 + (az - ez)^2}, {bx - ex, by - ey, bz - ez, (bx - ex)^2 + (by - ey)^2 + (bz - ez)^2}, {cx - ex, cy - ey, cz - ez, (cx - ex)^2 + (cy - ey)^2 + (cz - ez)^2}, {dx - ex, dy - ey, dz - ez, (dx - ex)^2 + (dy - ey)^2 + (dz - ez)^2}}
+		//@note    : positive, 0, negative result for d inside, on, or outside the circle defined by a, b, and c
+		template <typename T> T insphere(T const*const pa, T const*const pb, T const*const pc, T const*const pd, T const*const pe);
+	}
+}
+
 #include <array>
 #include <cmath>//abs, fma, exp2, signbit
 #include <limits>
@@ -44,6 +128,7 @@
 
 template<typename T> class ExpansionBase;
 
+//@brief: class to exactly represent the result of a sequence of arithmetic operations as an sequence of values that sum to the result
 template<typename T, size_t N>
 class Expansion : private ExpansionBase<T>, public std::array<T, N> {
 	private:
@@ -272,7 +357,13 @@ template <typename T> const T ExpansionBase<T>::Splitter = std::exp2(T((std::num
 
 namespace  predicates {
 	namespace exact {
-		template <typename T> T orient2d(const T* pa, const T* pb, const T* pc) {
+		//@brief   : determine if the 2d point c is above, on, or below the line defined by a and b
+		//@param pa: pointer to a as {x, y}
+		//@param pb: pointer to b as {x, y}
+		//@param pc: pointer to c as {x, y}
+		//@return  : determinant of {{ax - cx, ay - cy}, {bx - cx, by - cy}}
+		//@note    : positive, 0, negative result for c above, on, or below the line defined by a -> b
+		template <typename T> T orient2d(T const*const pa, T const*const pb, T const*const pc) {
 			const Expansion<T, 4> aterms = ExpansionBase<T>::TwoTwoDiff(pa[0], pb[1], pa[0], pc[1]);
 			const Expansion<T, 4> bterms = ExpansionBase<T>::TwoTwoDiff(pb[0], pc[1], pb[0], pa[1]);
 			const Expansion<T, 4> cterms = ExpansionBase<T>::TwoTwoDiff(pc[0], pa[1], pc[0], pb[1]);
@@ -280,7 +371,14 @@ namespace  predicates {
 			return w.mostSignificant();
 		}
 
-		template <typename T> T incircle(const T* pa, const T* pb, const T* pc, const T* pd) {
+		//@brief   : determine if the 2d point d is inside, on, or outside the circle defined by a, b, and c
+		//@param pa: pointer to a as {x, y}
+		//@param pb: pointer to b as {x, y}
+		//@param pc: pointer to c as {x, y}
+		//@param pc: pointer to d as {x, y}
+		//@return  : determinant of {{ax - dx, ay - dy, (ax - dx)^2 + (ay - dy)^2}, {bx - dx, by - dy, (bx - dx)^2 + (by - dy)^2}, {cx - dx, cy - dy, (cx - dx)^2 + (cy - dy)^2}}
+		//@note    : positive, 0, negative result for d inside, on, or outside the circle defined by a, b, and c
+		template <typename T> T incircle(T const*const pa, T const*const pb, T const*const pc, T const*const pd) {
 			const Expansion<T, 4> ab = ExpansionBase<T>::TwoTwoDiff(pa[0], pb[1], pb[0], pa[1]);
 			const Expansion<T, 4> bc = ExpansionBase<T>::TwoTwoDiff(pb[0], pc[1], pc[0], pb[1]);
 			const Expansion<T, 4> cd = ExpansionBase<T>::TwoTwoDiff(pc[0], pd[1], pd[0], pc[1]);
@@ -302,7 +400,14 @@ namespace  predicates {
 			return deter.mostSignificant();
 		}
 
-		template <typename T> T orient3d(const T* pa, const T* pb, const T* pc, const T* pd) {
+		//@brief   : determine if the 3d point d is above, on, or below the plane defined by a, b, and c
+		//@param pa: pointer to a as {x, y, z}
+		//@param pb: pointer to b as {x, y, z}
+		//@param pc: pointer to c as {x, y, z}
+		//@param pd: pointer to d as {x, y, z}
+		//@return  : determinant of {{ax - dx, ay - dy, az - dz}, {bx - dx, by - dy, bz - dz}, {cx - dx, cy - dy, cz - dz}}
+		//@note    : positive, 0, negative result for c above, on, or below the plane defined by a, b, and c
+		template <typename T> T orient3d(T const*const pa, T const*const pb, T const*const pc, T const*const pd) {
 			const Expansion<T, 4> ab = ExpansionBase<T>::TwoTwoDiff(pa[0], pb[1], pb[0], pa[1]);
 			const Expansion<T, 4> bc = ExpansionBase<T>::TwoTwoDiff(pb[0], pc[1], pc[0], pb[1]);
 			const Expansion<T, 4> cd = ExpansionBase<T>::TwoTwoDiff(pc[0], pd[1], pd[0], pc[1]);
@@ -324,7 +429,15 @@ namespace  predicates {
 			return deter.mostSignificant();
 		}
 
-		template <typename T> T insphere(const T* pa, const T* pb, const T* pc, const T* pd, const T* pe) {
+		//@brief   : determine if the 3d point e is inside, on, or outside the sphere defined by a, b, c, and d
+		//@param pa: pointer to a as {x, y, z}
+		//@param pb: pointer to b as {x, y, z}
+		//@param pc: pointer to c as {x, y, z}
+		//@param pd: pointer to d as {x, y, z}
+		//@param pe: pointer to e as {x, y, z}
+		//@return  : determinant of {{ax - ex, ay - ey, az - ez, (ax - ex)^2 + (ay - ey)^2 + (az - ez)^2}, {bx - ex, by - ey, bz - ez, (bx - ex)^2 + (by - ey)^2 + (bz - ez)^2}, {cx - ex, cy - ey, cz - ez, (cx - ex)^2 + (cy - ey)^2 + (cz - ez)^2}, {dx - ex, dy - ey, dz - ez, (dx - ex)^2 + (dy - ey)^2 + (dz - ez)^2}}
+		//@note    : positive, 0, negative result for d inside, on, or outside the circle defined by a, b, and c
+		template <typename T> T insphere(T const*const pa, T const*const pb, T const*const pc, T const*const pd, T const*const pe) {
 			const Expansion<T, 4> ab = ExpansionBase<T>::TwoTwoDiff(pa[0], pb[1], pb[0], pa[1]);
 			const Expansion<T, 4> bc = ExpansionBase<T>::TwoTwoDiff(pb[0], pc[1], pc[0], pb[1]);
 			const Expansion<T, 4> cd = ExpansionBase<T>::TwoTwoDiff(pc[0], pd[1], pd[0], pc[1]);
@@ -390,7 +503,13 @@ namespace  predicates {
 	template <typename T> const T Constants<T>::isperrboundC   = (T(71) + T(1408) * Constants<T>::epsilon) * Constants<T>::epsilon * Constants<T>::epsilon;
 
 	namespace adaptive {
-		template <typename T> T orient2d(const T* pa, const T* pb, const T* pc) {
+		//@brief   : determine if the 2d point c is above, on, or below the line defined by a and b
+		//@param pa: pointer to a as {x, y}
+		//@param pb: pointer to b as {x, y}
+		//@param pc: pointer to c as {x, y}
+		//@return  : determinant of {{ax - cx, ay - cy}, {bx - cx, by - cy}}
+		//@note    : positive, 0, negative result for c above, on, or below the line defined by a -> b
+		template <typename T> T orient2d(T const*const pa, T const*const pb, T const*const pc) {
 			const T acx = pa[0] - pc[0];
 			const T bcx = pb[0] - pc[0];
 			const T acy = pa[1] - pc[1];
@@ -424,7 +543,14 @@ namespace  predicates {
 			return D.mostSignificant();
 		}
 
-		template <typename T> T incircle(const T* pa, const T* pb, const T* pc, const T* pd) {
+		//@brief   : determine if the 2d point d is inside, on, or outside the circle defined by a, b, and c
+		//@param pa: pointer to a as {x, y}
+		//@param pb: pointer to b as {x, y}
+		//@param pc: pointer to c as {x, y}
+		//@param pc: pointer to d as {x, y}
+		//@return  : determinant of {{ax - dx, ay - dy, (ax - dx)^2 + (ay - dy)^2}, {bx - dx, by - dy, (bx - dx)^2 + (by - dy)^2}, {cx - dx, cy - dy, (cx - dx)^2 + (cy - dy)^2}}
+		//@note    : positive, 0, negative result for d inside, on, or outside the circle defined by a, b, and c
+		template <typename T> T incircle(T const*const pa, T const*const pb, T const*const pc, T const*const pd) {
 			const T adx = pa[0] - pd[0];
 			const T bdx = pb[0] - pd[0];
 			const T cdx = pc[0] - pd[0];
@@ -477,7 +603,14 @@ namespace  predicates {
 			return exact::incircle(pa, pb, pc, pd);
 		}
 
-		template <typename T> T orient3d(const T* pa, const T* pb, const T* pc, const T* pd) {
+		//@brief   : determine if the 3d point d is above, on, or below the plane defined by a, b, and c
+		//@param pa: pointer to a as {x, y, z}
+		//@param pb: pointer to b as {x, y, z}
+		//@param pc: pointer to c as {x, y, z}
+		//@param pd: pointer to d as {x, y, z}
+		//@return  : determinant of {{ax - dx, ay - dy, az - dz}, {bx - dx, by - dy, bz - dz}, {cx - dx, cy - dy, cz - dz}}
+		//@note    : positive, 0, negative result for c above, on, or below the plane defined by a, b, and c
+		template <typename T> T orient3d(T const*const pa, T const*const pb, T const*const pc, T const*const pd) {
 			const T adx = pa[0] - pd[0];
 			const T bdx = pb[0] - pd[0];
 			const T cdx = pc[0] - pd[0];
@@ -539,7 +672,15 @@ namespace  predicates {
 			return fin2.mostSignificant();
 		}
 
-		template <typename T> T insphere(const T* pa, const T* pb, const T* pc, const T* pd, const T* pe) {
+		//@brief   : determine if the 3d point e is inside, on, or outside the sphere defined by a, b, c, and d
+		//@param pa: pointer to a as {x, y, z}
+		//@param pb: pointer to b as {x, y, z}
+		//@param pc: pointer to c as {x, y, z}
+		//@param pd: pointer to d as {x, y, z}
+		//@param pe: pointer to e as {x, y, z}
+		//@return  : determinant of {{ax - ex, ay - ey, az - ez, (ax - ex)^2 + (ay - ey)^2 + (az - ez)^2}, {bx - ex, by - ey, bz - ez, (bx - ex)^2 + (by - ey)^2 + (bz - ez)^2}, {cx - ex, cy - ey, cz - ez, (cx - ex)^2 + (cy - ey)^2 + (cz - ez)^2}, {dx - ex, dy - ey, dz - ez, (dx - ex)^2 + (dy - ey)^2 + (dz - ez)^2}}
+		//@note    : positive, 0, negative result for d inside, on, or outside the circle defined by a, b, and c
+		template <typename T> T insphere(T const*const pa, T const*const pb, T const*const pc, T const*const pd, T const*const pe) {
 			T permanent;
 			const T aex = pa[0] - pe[0];
 			const T bex = pb[0] - pe[0];
