@@ -52,7 +52,7 @@ int main() {
 	std::cout << "\t(" << points[0] << " " << points[1] << ")\n";
 	std::cout << "\t(" << points[2] << " " << points[3] << ")\n\n";
 
-	x = predicates::adaptive::incircle<double>(&points[0], &points[2], &points[4], &points[8]);
+	x = predicates::adaptive::incircle<double>(&points[0], &points[2], &points[4], &points[6]);
 	std::cout << "(" << points[6] << " " << points[7];
 	if(x < 0.0) std::cout << ") is outside the circle defined by:\n";
 	else if(x > 0.0) std::cout << ") is inside the circle defined by:\n";
