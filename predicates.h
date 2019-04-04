@@ -1,6 +1,6 @@
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *                                                                                 *
- * Copyright (c) 2016, William C. Lenthe                                           *
+ * Copyright (c) 2019, William C. Lenthe                                           *
  * All rights reserved.                                                            *
  *                                                                                 *
  * Redistribution and use in source and binary forms, with or without              *
@@ -120,9 +120,9 @@ namespace  predicates {
 // a macro based static assert for pre c++11
 #define MACRO_STATIC_ASSERT(condition, message) typedef char message[(condition) ? 1 : -1];
 	
-// check if we have c++11 or only c++03
+// check if we have c++11 features
 #if(__cplusplus == 199711L)
-	//compiler is c++03 (or earlier but that seems unlikely)
+	//compiler is c++98 or c++03
 #elif( __cplusplus == 201103L || __cplusplus == 201703L || __cplusplus == 201703L || __cplusplus > 201703L)
 	//if the compiler is c++11 (or newer) use some extra functionality
 	#define CXX_ARRAY    //std::array
@@ -136,7 +136,7 @@ namespace  predicates {
 	MACRO_STATIC_ASSERT(false, couldnt_parse_cxx_standard)
 #endif
 
-#include <cmath>//abs, fma, exp2, signbit
+#include <cmath>//abs, fma
 #include <limits>
 #include <utility>//pair
 #include <numeric>//accumulate
@@ -592,7 +592,7 @@ namespace  predicates {
 			const T detleft = acx * bcy;
 			const T detright = acy * bcx;
 			T det = detleft - detright;
-			if(std::signbit(detleft) != std::signbit(detright)) return det;
+			if((detleft < 0) != (detright < 0)) return det;
 			if(T(0) == detleft || T(0) == detright) return det;
 
 			const T detsum = std::abs(detleft + detright);
