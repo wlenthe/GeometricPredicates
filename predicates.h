@@ -123,7 +123,7 @@ namespace  predicates {
 // check if we have c++11 features
 #if(__cplusplus == 199711L)
 	//compiler is c++98 or c++03
-#elif( __cplusplus == 201103L || __cplusplus == 201703L || __cplusplus == 201703L || __cplusplus > 201703L)
+#elif( __cplusplus == 201103L || __cplusplus == 201402L || __cplusplus == 201703L || __cplusplus == 201703L || __cplusplus > 201703L)
 	//if the compiler is c++11 (or newer) use some extra functionality
 	#define CXX_ARRAY    //std::array
 	#define CXX_ENABLE_IF//std::enable_if
@@ -259,17 +259,14 @@ namespace detail {
 	template<typename T>
 	class ExpansionBase {
 		private:
-			typedef unsigned long long IType;//integer type for splitter calculation
-			static const IType Splitter = ( IType(1) << ( (std::numeric_limits<T>::digits + 1 ) / 2 ) ) + 1;
+			static const T Splitter;
 
 		#ifdef CXX_ASSERT
 			static_assert(std::numeric_limits<T>::is_iec559, "Requires IEC 559 / IEEE 754 floating point type");
 			static_assert(2 == std::numeric_limits<T>::radix, "Requires base 2 floating point type");
-			static_assert(sizeof(IType) >= sizeof(T), "Integer type may overflow during splitter calculation");
 		#else
 			MACRO_STATIC_ASSERT(std::numeric_limits<T>::is_iec559, Requires_IEC_559_IEEE_754_floating_point_type);
 			MACRO_STATIC_ASSERT(2 == std::numeric_limits<T>::radix, Requires_base_2_floating_point_type);
-			MACRO_STATIC_ASSERT(sizeof(IType) >= sizeof(T), Integer_type_may_overflow_during_splitter_calculation);
 		#endif
 
 			//combine result + roundoff error into expansion
@@ -428,6 +425,8 @@ namespace detail {
 			//(a * b) * c checking for zeros
 			static inline Expansion<T, 4> ThreeProd(const T a, const T b, const T c) {return (T(0) == a || T(0) == b || T(0) == c) ? Expansion<T, 4>() : Mult(a, b) * c;}
 	};
+
+	template <typename T> const T ExpansionBase<T>::Splitter = std::ldexp(T(1), (std::numeric_limits<double>::digits + 1 ) / 2 ) + T(1);
 }
 
 namespace  predicates {
@@ -562,7 +561,7 @@ namespace  predicates {
 			static const T isperrboundA, isperrboundB, isperrboundC;
 	};
 
-	template <typename T> const T Constants<T>::epsilon        = std::exp2(T(-std::numeric_limits<T>::digits));
+	template <typename T> const T Constants<T>::epsilon        = std::ldexp(T(1), -std::numeric_limits<T>::digits);
 	template <typename T> const T Constants<T>::resulterrbound = (T( 3) + T(   8) * Constants<T>::epsilon) * Constants<T>::epsilon;
 	template <typename T> const T Constants<T>::ccwerrboundA   = (T( 3) + T(  16) * Constants<T>::epsilon) * Constants<T>::epsilon;
 	template <typename T> const T Constants<T>::ccwerrboundB   = (T( 2) + T(  12) * Constants<T>::epsilon) * Constants<T>::epsilon;
