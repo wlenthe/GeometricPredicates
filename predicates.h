@@ -128,6 +128,7 @@ namespace  predicates {
 	#define CXX_ARRAY    //std::array
 	#define CXX_ENABLE_IF//std::enable_if
 	#define CXX_ASSERT   //static_assert
+	#define CXX_COPY_N   //std::copy_n
 	#include <array>
 	#include <type_traits>//is_same, enable_if
 #else
@@ -186,7 +187,12 @@ namespace detail {
 			#else
 				MACRO_STATIC_ASSERT(M <= N, cannot_assign_a_larger_expansion_to_a_smaller_expansion)
 			#endif
+
+			#ifdef CXX_COPY_N
 				std::copy_n(e.cbegin(), e.size(), Array<T, N>::begin());
+			#else
+				for(size_t i = 0; i < N; i++) this->operator[](i) = e[i];
+			#endif
 				m_size = e.size();
 				return *this;
 			}
@@ -253,13 +259,17 @@ namespace detail {
 	template<typename T>
 	class ExpansionBase {
 		private:
-			static const T Splitter;
+			typedef unsigned long long IType;//integer type for splitter calculation
+			static const IType Splitter = ( IType(1) << ( (std::numeric_limits<T>::digits + 1 ) / 2 ) ) + 1;
+
 		#ifdef CXX_ASSERT
 			static_assert(std::numeric_limits<T>::is_iec559, "Requires IEC 559 / IEEE 754 floating point type");
 			static_assert(2 == std::numeric_limits<T>::radix, "Requires base 2 floating point type");
+			static_assert(sizeof(IType) >= sizeof(T), "Integer type may overflow during splitter calculation");
 		#else
 			MACRO_STATIC_ASSERT(std::numeric_limits<T>::is_iec559, Requires_IEC_559_IEEE_754_floating_point_type);
 			MACRO_STATIC_ASSERT(2 == std::numeric_limits<T>::radix, Requires_base_2_floating_point_type);
+			MACRO_STATIC_ASSERT(sizeof(IType) >= sizeof(T), Integer_type_may_overflow_during_splitter_calculation);
 		#endif
 
 			//combine result + roundoff error into expansion
@@ -341,7 +351,7 @@ namespace detail {
 
 			//split a into 2 nonoverlapping values
 			static inline std::pair<T, T> Split(const T a) {
-				const T c = Splitter * a;
+				const T c = a * Splitter;
 				const T aBig = c - a;
 				const T aHi = c - aBig;
 				return std::pair<T, T>(aHi, a - aHi);
@@ -418,8 +428,6 @@ namespace detail {
 			//(a * b) * c checking for zeros
 			static inline Expansion<T, 4> ThreeProd(const T a, const T b, const T c) {return (T(0) == a || T(0) == b || T(0) == c) ? Expansion<T, 4>() : Mult(a, b) * c;}
 	};
-
-	template <typename T> const T ExpansionBase<T>::Splitter = std::exp2(T((std::numeric_limits<T>::digits + (std::numeric_limits<T>::digits%2))/2)) + T(1);
 }
 
 namespace  predicates {
