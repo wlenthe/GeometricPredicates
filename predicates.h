@@ -117,21 +117,62 @@ namespace  predicates {
 	}
 }
 
-#include <array>
+// a macro based static assert for pre c++11
+#define MACRO_STATIC_ASSERT(condition, message) typedef char message[(condition) ? 1 : -1];
+	
+// check if we have c++11 or only c++03
+#if(__cplusplus == 199711L)
+	//compiler is c++03 (or earlier but that seems unlikely)
+#elif( __cplusplus == 201103L || __cplusplus == 201703L || __cplusplus == 201703L || __cplusplus > 201703L)
+	//if the compiler is c++11 (or newer) use some extra functionality
+	#define CXX_ARRAY    //std::array
+	#define CXX_ENABLE_IF//std::enable_if
+	#define CXX_ASSERT   //static_assert
+	#include <array>
+	#include <type_traits>//is_same, enable_if
+#else
+	//we failed to determine the compiler
+	MACRO_STATIC_ASSERT(false, couldnt_parse_cxx_standard)
+#endif
+
 #include <cmath>//abs, fma, exp2, signbit
 #include <limits>
 #include <utility>//pair
 #include <numeric>//accumulate
 #include <algorithm>//transform, copy_n, merge
 #include <functional>//negate
-#include <type_traits>//is_same, enable_if
+
+#ifdef CXX_ARRAY
+	namespace detail {
+		template<class T, size_t N> using Array = std::array<T, N>;//detail::Array<T,N> == std::array<T,N>
+	}
+#else
+	//we need to define a minimal version of std::array
+	namespace detail {
+		//a class to emulate required behavoir of std::array
+		template<typename T, size_t N>
+		class Array {
+			T buff[N];
+
+			public:
+				      T& operator[](const size_t& i)       {return buff[i];} 
+				const T& operator[](const size_t& i) const {return buff[i];} 
+
+				T       * data()       {return buff;}
+				T const * data() const {return buff;}
+
+				T       *  begin()       {return buff;}
+				T const * cbegin() const {return buff;}
+		};
+	}
+#endif
 
 namespace detail {
 	template<typename T> class ExpansionBase;
 
 	//@brief: class to exactly represent the result of a sequence of arithmetic operations as an sequence of values that sum to the result
 	template<typename T, size_t N>
-	class Expansion : private ExpansionBase<T>, public std::array<T, N> {
+	class Expansion : private ExpansionBase<T>, public Array<T, N> {
 		private:
 		public:
 			size_t m_size;
@@ -140,8 +181,12 @@ namespace detail {
 
 			Expansion() : m_size(0) {}
 			template <size_t M> Expansion& operator=(const Expansion<T, M>& e) {
+			#ifdef CXX_ASSERT
 				static_assert(M <= N, "cannot assign a larger expansion to a smaller expansion");
-				std::copy_n(e.cbegin(), e.size(), std::array<T, N>::begin());
+			#else
+				MACRO_STATIC_ASSERT(M <= N, cannot_assign_a_larger_expansion_to_a_smaller_expansion)
+			#endif
+				std::copy_n(e.cbegin(), e.size(), Array<T, N>::begin());
 				m_size = e.size();
 				return *this;
 			}
@@ -149,12 +194,12 @@ namespace detail {
 			//vector like convenience functions
 			size_t size() const {return m_size;}
 			bool empty() const {return 0 == m_size;}
-			void push_back(const T v) {std::array<T, N>::operator[](m_size++) = v;}
+			void push_back(const T v) {Array<T, N>::operator[](m_size++) = v;}
 
 		public:
 			//estimates of expansion value
-			T mostSignificant() const {return empty() ? T(0) : std::array<T, N>::operator[](m_size - 1);}
-			T estimate() const {return std::accumulate(std::array<T, N>::cbegin(), std::array<T, N>::cbegin() + size(), T(0));}
+			T mostSignificant() const {return empty() ? T(0) : Array<T, N>::operator[](m_size - 1);}
+			T estimate() const {return std::accumulate(Array<T, N>::cbegin(), Array<T, N>::cbegin() + size(), T(0));}
 
 			template <size_t M> Expansion<T, N+M> operator+(const Expansion<T, M>& f) const {
 				Expansion<T, N+M> h;
@@ -162,7 +207,7 @@ namespace detail {
 				return h;
 			}
 
-			void negate() {std::transform(std::array<T, N>::cbegin(), std::array<T, N>::cbegin() + size(), std::array<T, N>::begin(), std::negate<T>());}
+			void negate() {std::transform(Array<T, N>::cbegin(), Array<T, N>::cbegin() + size(), Array<T, N>::begin(), std::negate<T>());}
 			Expansion operator-() const {Expansion e = *this; e.negate(); return e;}
 			template <size_t M> Expansion<T, N+M> operator-(const Expansion<T, M>& f) const {return operator+(-f);}
 
@@ -192,16 +237,30 @@ namespace detail {
 		static const bool fp_fast_fmal = false;
 	#endif
 
+	#ifdef CXX_ENABLE_IF
 	template <typename T> struct use_fma {static const bool value = (std::is_same<T, float>::value       && fp_fast_fmaf) ||
 	                                                                (std::is_same<T, double>::value      && fp_fast_fma)  ||
 	                                                                (std::is_same<T, long double>::value && fp_fast_fmal);};
+	#endif
+
+	//@brief  : helper function to sort by absolute value
+	//@param a: lhs item to compare
+	//@param b: rhs item to compare
+	//@return : true if |a| < |b|
+	//@note   : defined since lambda functions aren't allow in c++03
+	template <typename T> bool absLess(const T& a, const T& b) {return std::abs(a) < std::abs(b);}
 
 	template<typename T>
 	class ExpansionBase {
 		private:
 			static const T Splitter;
+		#ifdef CXX_ASSERT
 			static_assert(std::numeric_limits<T>::is_iec559, "Requires IEC 559 / IEEE 754 floating point type");
 			static_assert(2 == std::numeric_limits<T>::radix, "Requires base 2 floating point type");
+		#else
+			MACRO_STATIC_ASSERT(std::numeric_limits<T>::is_iec559, Requires_IEC_559_IEEE_754_floating_point_type);
+			MACRO_STATIC_ASSERT(2 == std::numeric_limits<T>::radix, Requires_base_2_floating_point_type);
+		#endif
 
 			//combine result + roundoff error into expansion
 			static inline Expansion<T, 2> MakeExpansion(const T value, const T tail) {
@@ -214,7 +273,7 @@ namespace detail {
 		protected:
 			//add 2 expansions
 			static size_t ExpansionSum(T const * const e, const size_t n, T const * const f, const size_t m, T * const h) {
-				std::merge(e, e + n, f, f + m, h, [](const T& a, const T& b) {return std::abs(a) < std::abs(b);});
+				std::merge(e, e + n, f, f + m, h, absLess<T>);
 				if(m == 0) return n;
 				if(n == 0) return m;
 				size_t hIndex = 0;
@@ -297,11 +356,17 @@ namespace detail {
 			}
 
 			//roundoff error of x = a * b
+		#ifdef CXX_ENABLE_IF
 			template <typename S = T> static typename std::enable_if< use_fma<S>::value, S>::type MultTail(const T a, const T b, const T p) {return std::fma(a, b, -p);}
 			template <typename S = T> static typename std::enable_if<!use_fma<S>::value, S>::type MultTail(const T a, const T b, const T p) {return DekkersProduct(a, Split(a), b, Split(b), p);}
 
 			template <typename S = T> static typename std::enable_if< use_fma<S>::value, S>::type MultTailPreSplit(const T a, const T b, const std::pair<T, T> bSplit, const T p) {return std::fma(a, b, -p);}
 			template <typename S = T> static typename std::enable_if<!use_fma<S>::value, S>::type MultTailPreSplit(const T a, const T b, const std::pair<T, T> bSplit, const T p) {return DekkersProduct(a, Split(a), b, bSplit, p);}
+		#else
+			//std::fma shouldn't exist unless std::enable_if is also defined
+			static T MultTail(const T a, const T b, const T p) {return DekkersProduct(a, Split(a), b, Split(b), p);}
+			static T MultTailPreSplit(const T a, const T b, const std::pair<T, T> bSplit, const T p) {return DekkersProduct(a, Split(a), b, bSplit, p);}
+		#endif
 
 			//expand a + b
 			static inline Expansion<T, 2> Plus(const T a, const T b) {

@@ -31,18 +31,39 @@
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 #include <iostream>
-#include <random>
 #include <vector>
 
 #include "predicates.h"
 
+#if( __cplusplus == 201103L || __cplusplus == 201703L || __cplusplus == 201703L || __cplusplus > 201703L)
+	#define CXX_RANDOM//better random number generation
+	#include <random>
+#endif
+
+//@brief : generate a random number in [0,1]
+//@return: number in [0,1]
+double rand01() {
+#ifdef CXX_RANDOM
+	//prefer c++11 random number generation
+	static std::random_device device;
+	static const size_t seed = device();
+	static std::mt19937 engine(seed);
+	static std::uniform_real_distribution<double> dist(0.0, 1.0);
+	return dist(engine);
+#else
+	//fall back to bad random numbers
+	static bool once = true;
+	if(once) {
+		srand(time(NULL));
+		once = false;
+	}
+	return double(rand()) / RAND_MAX;
+#endif
+}
+
 int main() {
-	std::random_device device;
-	size_t seed = device();
-	std::mt19937 engine(seed);
-	std::uniform_real_distribution<double> dist(0.0, 1.0);
 	std::vector<double> points(15);
-	for(size_t i = 0; i < points.size(); i++) points[i] = dist(engine);
+	for(size_t i = 0; i < points.size(); i++) points[i] = rand01();
 
 	double x = predicates::adaptive::orient2d<double>(&points[0], &points[2], &points[4]);
 	std::cout << "(" << points[4] << " " << points[5];
