@@ -100,5 +100,29 @@ int main() {
 	std::cout << "\t(" << points[3] << " " << points[ 4]  << " " << points[ 5] << ")\n";
 	std::cout << "\t(" << points[6] << " " << points[ 7]  << " " << points[ 8] << ")\n";
 	std::cout << "\t(" << points[9] << " " << points[10]  << " " << points[11] << ")\n";
+	
+	// robustness test and visualization
+	{ 
+		const double p1[2] = { 0.0, 0.0 };
+		const double p2[2] = { 24., 24. };
+		const int resolution = 80;
+		const double eps = std::pow(2.0, -53);
+		std::cout << "Testing 2D orientation robustness" << std::endl;
+		std::cout << "line             : from (0, 0) to (24, 24)" << std::endl;
+		std::cout << "bottom-left point: (0.5, 0.5)" << std::endl;
+		std::cout << "step-size        : 2^-53" << std::endl;
+		for (int iy = resolution - 1; iy >= 0; --iy)
+		{
+			for (int ix = 0; ix < resolution; ++ix)
+			{
+				const double p[2] = { 0.5 + ix * eps, 0.5 + iy * eps };
+				using predicates::adaptive::orient2d;
+				const double res = orient2d<double>(&p1[0], &p2[0], &p[0]);
+				std::cout << (res == 0.0 ? "0" : res < 0.0 ? "-" : "+");
+			}
+			std::cout << std::endl;
+		}
+	}
+	
 	return 0;	
 }
