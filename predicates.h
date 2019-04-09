@@ -30,8 +30,8 @@
  *                                                                                 *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#ifndef PREDICATES_H_dff5c08
-#define PREDICATES_H_dff5c08
+#ifndef PREDICATES_H_INCLUDED
+#define PREDICATES_H_INCLUDED
 
 //@reference: https://www.cs.cmu.edu/~quake/robust.html
 
@@ -262,12 +262,10 @@ namespace detail {
 	template<typename T>
 	class ExpansionBase {
 		private:
-			typedef unsigned long long IType;//integer type for splitter calculation
-			static const IType Splitter = ( IType(1) << ( (std::numeric_limits<T>::digits + 1 ) / 2 ) ) + 1;
+			static const T Splitter;
 
 			PREDICATES_PORTABLE_STATIC_ASSERT(std::numeric_limits<T>::is_iec559, Requires_IEC_559_IEEE_754_floating_point_type);
 			PREDICATES_PORTABLE_STATIC_ASSERT(2 == std::numeric_limits<T>::radix, Requires_base_2_floating_point_type);
-			PREDICATES_PORTABLE_STATIC_ASSERT(sizeof(IType) >= sizeof(T), Integer_type_may_overflow_during_splitter_calculation);
 
 			//combine result + roundoff error into expansion
 			static inline Expansion<T, 2> MakeExpansion(const T value, const T tail) {
@@ -423,6 +421,12 @@ namespace detail {
 			//(a * b) * c checking for zeros
 			static inline Expansion<T, 4> ThreeProd(const T a, const T b, const T c) {return (T(0) == a || T(0) == b || T(0) == c) ? Expansion<T, 4>() : Mult(a, b) * c;}
 	};
+
+#ifdef PREDICATES_CXX11_IS_SUPPORTED
+	template <typename T> const T ExpansionBase<T>::Splitter = std::exp2((std::numeric_limits<T>::digits + std::numeric_limits<T>::digits%2)/2 + 1);
+#else
+	template <typename T> const T ExpansionBase<T>::Splitter = std::ldexp(T(1), (std::numeric_limits<T>::digits + std::numeric_limits<T>::digits%2)/2 + 1);
+#endif
 }
 
 namespace  predicates {
@@ -557,9 +561,9 @@ namespace  predicates {
 			static const T isperrboundA, isperrboundB, isperrboundC;
 	};
 #ifdef PREDICATES_CXX11_IS_SUPPORTED
-	template <typename T> const T Constants<T>::epsilon        = std::exp2(T(-std::numeric_limits<T>::digits));
+	template <typename T> const T Constants<T>::epsilon        = std::exp2(-std::numeric_limits<T>::digits);
 #else
-	template <typename T> const T Constants<T>::epsilon        = std::pow(2, T(-std::numeric_limits<T>::digits));
+	template <typename T> const T Constants<T>::epsilon        = std::ldexp(T(1), -std::numeric_limits<T>::digits);
 #endif
 	template <typename T> const T Constants<T>::resulterrbound = (T( 3) + T(   8) * Constants<T>::epsilon) * Constants<T>::epsilon;
 	template <typename T> const T Constants<T>::ccwerrboundA   = (T( 3) + T(  16) * Constants<T>::epsilon) * Constants<T>::epsilon;
