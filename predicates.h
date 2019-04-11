@@ -567,7 +567,7 @@ namespace  predicates {
 #ifdef PREDICATES_CXX11_IS_SUPPORTED
 		std::exp2(-std::numeric_limits<T>::digits)
 #else
-			std::ldexp(T(1), -std::numeric_limits<T>::digits)
+		std::ldexp(T(1), -std::numeric_limits<T>::digits)
 #endif
 	);
 
